@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:5000
+    volumes:
+      - .:/app
+
+# Set proxy as localhost:8000 (ports) for client
+# "proxy": "http://localhost:8000/"
+# client >> package.json
