@@ -19,14 +19,14 @@ function App() {
 
 
   }, [])
-
+//Test
   return (
     <div>
         {(typeof data.members === 'undefined') ? (
             <p>Loading...</p>
 
         ) : (
-          data.members.map((member,i) =>(
+          data.members.map((member,i)=>(
             <p key={i}>{member}</p>
           ))
         )
