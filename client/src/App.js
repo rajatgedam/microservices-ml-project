@@ -4,25 +4,55 @@ import React, {useState, useEffect} from 'react'
 
 function App() {
 
+
+
   const [test,tester] = useState(null);
 
   const [file, setFile] = useState(null);
 
   const [isLabel, labelSelect] = useState('No');
 
-  const [fileCols, showColFromFile] = useState([]);
+  const [fileColsDD, showColFromFile] = useState([]);
+
+  const [selectedCol, setSelectedColumn] = useState('');
+
+
+// onChange (on uploading the file )
+
+  const handleF=(e)=>{
+    let fTypes = ['application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','text/csv'];
+
+    let uploadedFile = e.target.files[0];
+
+    if (uploadedFile){
+
+      if(uploadedFile && fTypes.includes(uploadedFile.type)) {
+
+        
+      }
+    }
+
+  }
+
+
+
 
   const uploadFile = (event) => {
 
-    const uFile = event.target.files[0];
+    let uFile = event.target.files[0];
+
 
     if(uFile){
 
-      const fName = uFile.name;
 
-      const fExt = fName.split('.').pop().toLowerCase();
 
-      const acceptedFileTypes = ['xls','xlsx','csv'];
+
+      let fName = uFile.name;
+
+      let fExt = fName.split('.').pop().toLowerCase();
+
+      let acceptedFileTypes = ['xls','xlsx','csv'];
+
 
       if(acceptedFileTypes.includes(fExt)){
 
@@ -30,21 +60,24 @@ function App() {
 
         // Read the file and extract first row for dropdown options
 
-        const readObj = new FileReader();
+        let readObj = new FileReader();
+
 
         readObj.onload=(e)=>{
 
-          const fileCont = e.target.result;
+          let fileCont = e.target.result;
 
-          const fileLines = fileCont.split('\n');
+          let fileLines = fileCont.split('\n');
 
-          const DatasetCols = fileLines[0].split(',');
+          let DatasetCols = fileLines[0].split(',');
 
           showColFromFile(DatasetCols);
 
         };
 
+
         readObj.readAsText(uFile);
+
 
       } else{
 
@@ -54,11 +87,35 @@ function App() {
     }
   };
 
+  const updateSelectedLabel = (event) => {
+    setSelectedColumn(event.target.value)
+  };
+
   const funcSubmit = () => {
-    
+
     console.log(file);
 
     console.log(isLabel);
+
+    let inputMSData = new FormData();
+
+    inputMSData.append('dataset', file);
+
+    inputMSData.append('labelCol', selectedCol);
+
+    console.log(inputMSData);
+
+    fetch('http://localhost:5006/handleInput',{
+      method: 'POST',
+      body: inputMSData,
+    })
+    .then((response) => response.json())
+    .then((data)=> {
+      console.log(data);
+    })
+    .catch((error)=> {
+      console.error(error);
+    });
 
   };
 
@@ -70,7 +127,7 @@ function App() {
         fontFamily:'Montserrat', 
         backgroundColor:'#bbe4e9', 
         color:'white', 
-        minHeight:'100vh', 
+        minHeight:'50vh', 
         justifyContent:'center', 
         alignItems:'center'
         }}>
@@ -88,6 +145,30 @@ function App() {
             textAlign: 'center', 
             color: '#132743'}}>Upload your dataset</h2>
 
+        <br/>
+
+        <div style={{
+            marginBottom: '20px',
+            textAlign: 'center'}}>
+
+          <label style={{ color: '#132743' }}>Please upload a CSV or Excel file.</label>
+          <br/><br/>
+          <input 
+          type="file" 
+          accept=".csv, .xls, .xlsx" 
+          onChange={uploadFile} 
+          style={{
+            fontFamily:'Montserrat',
+            backgroundColor:'#5585b5',  
+            color:'#eaf6f6', 
+            padding:'10px 20px', 
+            border:'none', 
+            borderRadius:'5px', 
+            cursor: 'pointer' }}/>
+
+          
+
+        </div>
         <p style={{
             marginBottom: '20px', 
             textAlign: 'center', 
@@ -129,6 +210,11 @@ function App() {
           </label>
 
         </div>
+        {/* <p style={{
+            marginBottom: '20px', 
+            textAlign: 'center', 
+            color: '#132743' }}>Please select the label: </p> */}
+
 
         {isLabel === 'Yes' && 
         
@@ -136,12 +222,21 @@ function App() {
           <div style={{
             textAlign:'center',
             marginBottom:'20px'}}>
+            
+            <p style={{
+            marginBottom: '20px', 
+            textAlign: 'left', 
+            color: '#132743' }}>Please select the label: </p> 
 
-            <select style={{
+
+            <select 
+            style={{
                 width:'100%',
-                padding:'5px'}}>
+                padding:'5px'}} onChange={updateSelectedLabel}>
+            
 
-              {fileCols.map((option,index)=>(
+
+              {fileColsDD.map((option,index)=>(
 
                 <option                 
                 key={index} 
@@ -157,24 +252,6 @@ function App() {
 
           </div>
         )}
-
-        <div style={{
-            marginBottom: '20px',
-            textAlign: 'center'}}>
-
-          <input 
-          type="file" 
-          accept=".csv, .xls, .xlsx" 
-          onChange={uploadFile} 
-          style={{ 
-            marginBottom:'10px'}} />
-
-          <br/>
-
-          <small style={{ color: '#132743' }}>Please upload a CSV or Excel file.</small>
-
-        </div>
-
         <div style={{
             textAlign: 'center',
             marginBottom: '20px'}}>
@@ -188,6 +265,7 @@ function App() {
           borderRadius:'5px', 
           cursor: 'pointer' }}>Submit</button>
 
+          <br/>
           <br/>
 
         </div>

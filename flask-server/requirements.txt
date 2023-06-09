@@ -1,4 +1,6 @@
 Flask==2.3.2
+pandas==1.4.0
+scikit_learn==1.0.2
 Flask-Script==2.0.6
 Flask-Cors==3.0.9
 requests==2.31.0
