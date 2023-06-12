@@ -1,20 +1,19 @@
-
-import sys
-
-from flask import Flask, request
+from flask import Flask, jsonify, request
 import pandas as pd
 import json as js
 import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import LabelEncoder
-
-
 from typing import List
 import os
-
+import sys
 
 from abc import ABC, ABCMeta, abstractmethod
+
+inputPath = r'./InputDataset'
+prepPath = r'./PreparedDataset' 
+flag = -1
 
 class PreparingData(metaclass=ABCMeta):
 	#Component
@@ -28,7 +27,10 @@ class ConcreteComp(PreparingData):
 	#Concrete Component
 
 	def prepare_file(self)-> int:
-		return pd.read_csv('breast-cancer.csv')
+		if (flag == -1):
+			return pd.read_csv(inputPath+'/process_data.csv')
+		else:
+			return pd.read_csv(prepPath+'/prepared_data.csv')
 
 class prepDecorator(PreparingData):
 	#Decorator
@@ -41,9 +43,9 @@ class prepDecorator(PreparingData):
 		return self.__prepareData.prepare_file()
 	
 	#Test Method returns string
-	@abstractmethod
-	def selectfeaturing(self) -> str:
-		return self.__prepareData.selectfeaturing()
+	# @abstractmethod
+	# def selectfeaturing(self) -> str:
+	# 	return self.__prepareData.selectfeaturing()
 
 
 class categoricalEncoding(prepDecorator):
@@ -62,7 +64,14 @@ class categoricalEncoding(prepDecorator):
 		df2=df.copy()
 
 		df2[labelCol] = le.fit_transform(df2[labelCol])
-		return df2, dfCols
+		print('Before Save - categoricalEncoding Decorator')
+		print(df2)
+		df2.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
+		global flag 
+		flag = 1
+		print('After Save - categoricalEncoding Decorator/ flag value: ', flag)
+		
+		#return df2, dfCols
 
 class cleanData(prepDecorator):
 
@@ -82,6 +91,15 @@ class cleanData(prepDecorator):
 
 		#Drop the columns with more than x % NaN values
 		df2.dropna(thresh=nanThreshold*len(df2),axis=1,inplace=True)
+		
+		print('Before Save - cleanData Decorator')
+		print(df2)
+		df2.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
+		global flag 
+		flag = 2
+
+		print('After Save - cleanData Decorator / flag value: ', flag)
+		
 
 
 class ImputeData(prepDecorator):
@@ -98,7 +116,7 @@ class ImputeData(prepDecorator):
 		df2=df.copy()
 
 		#Imputation
-
+		print('Start - ImputeData Decorator')
 		imputer = SimpleImputer(strategy="mean")
 
 		#Encountered error before adding categorical encoding
@@ -107,24 +125,94 @@ class ImputeData(prepDecorator):
 		imputedDF = imputer.transform(df2)
 
 		idf = pd.DataFrame(imputedDF)
-		
-		return idf
 
+		print('Before Save - ImputeData Decorator')
+		idf.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
+		
+		print(idf)
+
+		global flag 
+		flag = 3
+		
+		print('After Save - ImputeData Decorator/ flag value: ', flag)
+		#return idf
+
+
+
+from flask_cors import CORS
+
+app = Flask(__name__)
+cors = CORS(app,resources={r'*':{'origins':'http://localhost:5006'}})
+
+
+@app.route('/prepdata', methods=['POST'])
+def prepdata():
+	try:
+		
+		payload = request.get_json()
+		labelCol = payload.get('labelCol')
+		labelPresent = False
+		if  labelCol:
+			labelPresent = True			
+			print('VVVVVVVVVVVVVV Label Present VVVVVVVVVVVVVVVV')
+		else:			
+			print('XXXXXXXXXXXXXX Label Abset XXXXXXXXXXXXXXXXX')
+
+		#Threshold for cleaning data
+		#Can be made dynamic by adding to url payload
+		nanThreshold = 0.6
+	
+		#Check if directory path exists
+		
+		if not os.path.exists(prepPath):
+			os.makedirs(prepPath)
+
+		#Read file
+		#df = pd.read_csv('breast-cancer.csv')
+
+
+		concrete = ConcreteComp()
+
+		if labelPresent:
+			decoratorCatEnc = categoricalEncoding(concrete)
+			decoratorCatEnc.prepare_file(labelCol)
+
+		print('prepdata flag value: ', flag)
+
+		decoratorcleanData = cleanData(concrete)
+		decoratorcleanData.prepare_file(nanThreshold)
+
+		print('prepdata flag value: ', flag)
+
+		decoratorImputeData = ImputeData(concrete)
+		decoratorImputeData.prepare_file()
+
+		print('prepdata flag value: ', flag)
+
+		return 'Yaha Tak' 
+
+	except:
+		e = sys.exc_info()[0]
+		return jsonify({'error': str(e)})
 
 #Main
 if __name__=='__main__':
 
-	PORT = os.environ.get('PORT',5011)
-	labelCol = ''
-	
-	labelCol = 'diagnosis'
-	nanThreshold = 0.6
-	#Read file
-	df = pd.read_csv('breast-cancer.csv')
+	PORT = os.environ.get('PORT',5007)
+	app.run(debug=True, host='0.0.0.0', port=PORT)
 
-	prepdata(df,labelCol,nanThreshold)
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 #-----------------------------------------#-----------------------------------------#-----------------------------------------#-----------------------------------------
 

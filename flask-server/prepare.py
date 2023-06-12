@@ -12,12 +12,21 @@ app = Flask(__name__)
 cors = CORS(app,resources={r'*':{'origins':'http://localhost:5006'}})
 
 
-@app.route('/prepdata/<labelCol>', methods=['POST'])
-def prepdata(labelCol):
+@app.route('/prepdata', methods=['POST'])
+def prepdata():
 
 	try:
 		print('Start')
 		inputPath = r'./InputDataset'
+		
+		#get label and other data
+		payload = request.get_json()
+		labelCol = payload.get('labelCol')
+		if not labelCol:
+			print('XXXXXXXXXXXXXX Label Abset XXXXXXXXXXXXXXXXX')
+		else:
+			print('VVVVVVVVVVVVVV Label Present VVVVVVVVVVVVVVVV')
+
 		#initialize variables
 		nanThreshold = 0.6
 		enc = OrdinalEncoder()
@@ -34,7 +43,7 @@ def prepdata(labelCol):
 		#labelCol = 'diagnosis'
 		
 		#Label categorical data
-		#get label from user 
+		#get label from user --------------------------------------------------------------------------------------------
 		le = LabelEncoder()
 		dfCols =  df.columns.values.tolist()
 		df2=df.copy()
@@ -43,7 +52,7 @@ def prepdata(labelCol):
 
 		#df[labelCol] = enc.fit_transform(df[[labelCol]])
 
-		#ordinal encoder
+		#ordinal encoder ------------------------------------------------------------------------------------------------
 
 		#print(enc.categories_)
 		print(df.shape)

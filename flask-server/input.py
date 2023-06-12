@@ -22,10 +22,12 @@ def handleinput():
         print("In here")
         # Get the uploaded file from React frontend
         file = request.files['dataset']
-
+        labelColumn = ''
         #Get label from request
-        labelColumn = request.form['labelCol']
-
+        if 'labelCol' in request.form:
+            labelColumn = request.form['labelCol']
+        if not labelColumn:
+            print('XXXXXXXXXXXXXX Label Abset XXXXXXXXXXXXXXXXX')
 
         
         df = pd.read_csv(file)
@@ -33,15 +35,27 @@ def handleinput():
         df.to_csv(inputPath+'/process_data.csv', encoding='utf-8', index=False)
 
         #Calling Next Microservice here
-        #PORT 5007 for PrepareData Service
-        MSprepUrl = 'http://localhost:5007/prepdata/{}'.format(labelColumn)
-        
-        response = requests.post(MSprepUrl)
-        
-        print('Response from PrepData  : ',response.raw)
+        #PORT 5007 for PrepareData 
+        # if not labelColumn:
+        #     MSprepUrl = 'http://localhost:5007/prepdata'
+        # else:            
+        #     MSprepUrl = 'http://localhost:5007/prepdata/{}'.format(labelColumn)
+        # print('POST URL rn: ',MSprepUrl)
+        # response = requests.post(MSprepUrl)
+
+        MSprepUrl = 'http://localhost:5007/prepdata'
+
+        payload = {'labelCol':labelColumn}
+
+        response = requests.post(MSprepUrl, json=payload)
+
+        print('******* Response from PrepData ******** : ',response.reason)
+
         if response.status_code == 200:
+            print('POST Success')
             return {"members": ["M1","M2","M4"]}
         else:
+            print('POST Failed')
             return {"Dismembers": ["D1","D2","D3"]}
         
     except Exception as e:

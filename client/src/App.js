@@ -100,8 +100,11 @@ function App() {
     let inputMSData = new FormData();
 
     inputMSData.append('dataset', file);
-
-    inputMSData.append('labelCol', selectedCol);
+    if (isLabel === 'Yes')
+    {
+      inputMSData.append('labelCol', selectedCol);
+    }
+    
 
     console.log(inputMSData);
 
