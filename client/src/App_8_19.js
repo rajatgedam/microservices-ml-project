@@ -8,24 +8,19 @@ const PerformanceMetricsPage=()=>{
   const [AUROCImgLoad, setAUROCImgLoad]=useState(false);
   const [AUPRCImgLoad, setAUPRCImgLoad]=useState(false);
 
-  useEffect(()=> {    
-    fetch('/outputFiles/Scores.txt').then((response)=>response.text()).then((info)=>{
+  useEffect(()=> {
+    fetch('outputPath/Scores.txt').then((response)=>response.text()).then((info)=>{
       const L=info.split('\n');
       const f1L=L.find(one=>one.includes('F1_score:'));
       const avgL=L.find(one=>one.includes('Avg:'))
       if(f1L&&avgL){
         setF1_score(f1L.split(':')[1].trim());
-        setAvg(avgL.split(':')[1].trim());
-        console.log('F1')
-        console.log(f1_score)
-        console.log('Avg')
-        
-        console.log(avg)
+        setAvg(f1L.split(':')[1].trim());
       }
     }).catch((error)=>{console.error(error);});
 
-    setTimeout(()=>{setAUROCImgLoad(true);}, 1000);
-    setTimeout(()=>{setAUPRCImgLoad(true);}, 1000);
+    setTimeout(()=>{AUROCImgLoad(true);}, 2000);
+    setTimeout(()=>{AUPRCImgLoad(true);}, 2000);
   
   }, []);
 
@@ -37,27 +32,21 @@ const PerformanceMetricsPage=()=>{
       backgroundColor:'#bbe4e9', 
       color:'white', 
       minHeight:'50vh', 
-      justifyContent:'center',
-      
-      
+      justifyContent:'center', 
+      alignItems:'center'
       }}>
-        <div><h1 style={{ marginTop:'0', textAlign:'center', color: '#407088'}}>Results</h1> <h2 style={{ marginTop:'0', textAlign:'center', color: '#407088'}}> Logistic Regression </h2>
-        
+        <h1>Results</h1>
         {
           f1_score && avg && (
-            <div style={{ marginTop:'10px', textAlign:'center', alignItems:'center',color: '#407088'}}><p> F1 Score: {f1_score}</p> <p>Average Accuracy: {avg}</p></div>
+            <div><p> F1 Score: {f1_score}</p> <p>Average Accuracy: {avg}</p></div>
           )}
+          {(AUROCImgLoad && AUPRCImgLoad)? (<div>
+            <img src = "R:\Academics\Capstone\flask-server\outputFiles\plot_AUROC.png" alt="AUROC" style = {{width:'50%'}}/>
+            <img src = "R:\Academics\Capstone\flask-server\outputFiles\plot_AUPRC.png" alt="AUPRC" style = {{width:'50%'}}/>
+          </div>) : (<div style={{marginTop:'20px'}}> LOADING THE DATA ... </div>)
 
 
-        
-          {(AUROCImgLoad && AUPRCImgLoad)? (<div style={{ marginTop:'20px', textAlign:'center'}}>
-            <img src = "/outputFiles/plot_AUROC.png" alt="AUROC" style = {{width:'50%'}}/>
-            <img src = "/outputFiles/plot_AUPRC.png" alt="AUPRC" style = {{width:'50%', marginTop:'20px'}}/>
-          </div>) : (<div style={{marginTop:'20px'}}> LOADING THE DATA ... </div>)}
-
-</div>
-        
-
+          }
       </div>
   );
 
@@ -122,7 +111,7 @@ function App() {
 
         setFile(uFile);
 
-        // Read the file and get dropdown options
+        // Read the file and extract first row for dropdown options
 
         let readObj = new FileReader();
 
@@ -172,7 +161,7 @@ function App() {
 
     console.log(inputMSData);
 
-    fetch('http://localhost:5006/handleInput',{
+    fetch('http://localhost:5006/sendInputDataset',{
       method: 'POST',
       body: inputMSData,
     })
@@ -201,7 +190,6 @@ function App() {
         justifyContent:'center', 
         alignItems:'center'
         }}>
-          { SwitchToResults ? (<PerformanceMetricsPage/>):(
 
       <div style={{maxWidth:'575px'}}>
 
@@ -354,7 +342,7 @@ function App() {
         </div>
 
       </div>
-)}
+
     </div>
   );
 };

@@ -24,8 +24,11 @@ def prepdata():
 		labelCol = payload.get('labelCol')
 		if not labelCol:
 			print('XXXXXXXXXXXXXX Label Abset XXXXXXXXXXXXXXXXX')
+			
 		else:
 			print('VVVVVVVVVVVVVV Label Present VVVVVVVVVVVVVVVV')
+			labelCol=labelCol.rstrip('\r\n')
+			
 
 		#initialize variables
 		nanThreshold = 0.6
@@ -89,7 +92,7 @@ def prepdata():
 	
 	except Exception as e:
 		ErrMsg = 'Error Processing the request: '.format(str(e))
-		print(e)
+		print(ErrMsg, e)
 		return jsonify({'error': ErrMsg}), 500
 
 

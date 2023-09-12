@@ -14,7 +14,7 @@ from abc import ABC, ABCMeta, abstractmethod
 inputPath = r'./InputDataset'
 prepPath = r'./PreparedDataset' 
 flag = -1
-
+#flag for selecting input
 class PreparingData(metaclass=ABCMeta):
 	#Component
 
@@ -65,6 +65,7 @@ class categoricalEncoding(prepDecorator):
 
 		df2[labelCol] = le.fit_transform(df2[labelCol])
 		print('Before Save - categoricalEncoding Decorator')
+		print("df.shape",df.shape)
 		print(df2)
 		df2.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
 		global flag 
@@ -93,6 +94,7 @@ class cleanData(prepDecorator):
 		df2.dropna(thresh=nanThreshold*len(df2),axis=1,inplace=True)
 		
 		print('Before Save - cleanData Decorator')
+		print("df.shape",df.shape)
 		print(df2)
 		df2.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
 		global flag 
@@ -111,31 +113,36 @@ class ImputeData(prepDecorator):
 
 
 	def prepare_file(self) -> str:
+		try:
+			df = super().prepare_file()
+			df2=df.copy()
 
-		df = super().prepare_file()
-		df2=df.copy()
+			#Imputation
+			print('Start - ImputeData Decorator')
+			imputer = SimpleImputer(strategy="mean")
 
-		#Imputation
-		print('Start - ImputeData Decorator')
-		imputer = SimpleImputer(strategy="mean")
+			#Encountered error before adding categorical encoding
 
-		#Encountered error before adding categorical encoding
+			imputer.fit(df2)
+			imputedDF = imputer.transform(df2)
 
-		imputer.fit(df2)
-		imputedDF = imputer.transform(df2)
+			idf = pd.DataFrame(imputedDF)
+			print("df.shape",df.shape)
+			print('Before Save - ImputeData Decorator')
+			idf.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
+			
+			print(idf)
 
-		idf = pd.DataFrame(imputedDF)
+			global flag 
+			flag = 3
 
-		print('Before Save - ImputeData Decorator')
-		idf.to_csv(prepPath+'/prepared_data.csv', encoding='utf-8', index=False)
-		
-		print(idf)
+			print('After Save - ImputeData Decorator/ flag value: ', flag)
+			#return idf
+		except Exception as e:
+			ErrMsg = 'Error Processing the request: '.format(str(e))
+			print(ErrMsg, e)
+			#return jsonify({'error': ErrMsg}), 500
 
-		global flag 
-		flag = 3
-		
-		print('After Save - ImputeData Decorator/ flag value: ', flag)
-		#return idf
 
 
 
@@ -154,9 +161,10 @@ def prepdata():
 		labelPresent = False
 		if  labelCol:
 			labelPresent = True			
-			print('VVVVVVVVVVVVVV Label Present VVVVVVVVVVVVVVVV')
+			labelCol = labelCol.rstrip('\r\n')
+			print('^.^ ^.^ ^.^ ^.^ Label Present ^.^ ^.^ ^.^ ^.^')
 		else:			
-			print('XXXXXXXXXXXXXX Label Abset XXXXXXXXXXXXXXXXX')
+			print('>.< >.< >.< >.< Label Absent >.< >.< >.< >.<')
 
 		#Threshold for cleaning data
 		#Can be made dynamic by adding to url payload
@@ -170,7 +178,7 @@ def prepdata():
 		#Read file
 		#df = pd.read_csv('breast-cancer.csv')
 
-
+		#Instantiation
 		concrete = ConcreteComp()
 
 		if labelPresent:
